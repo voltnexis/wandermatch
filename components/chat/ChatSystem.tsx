@@ -111,14 +111,14 @@ export default function ChatSystem() {
       return
     }
 
-    const message = {
+    const message: ChatMessage = {
       id: Date.now().toString(),
       chatId: selectedChat.id!,
       senderId: currentUserId,
       senderName: 'You',
       content: newMessage,
-      timestamp: { seconds: Date.now() / 1000 },
-      type: 'text'
+      timestamp: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date(), toMillis: () => Date.now(), isEqual: () => false, toJSON: () => ({}) } as any,
+      type: 'text' as 'text'
     }
 
     // Add message to current messages
