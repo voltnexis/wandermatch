@@ -262,7 +262,10 @@ export default function ChatSystem() {
                       </div>
                       {chat.lastMessageTime && (
                         <div className="text-xs text-gray-400">
-                          {new Date(chat.lastMessageTime).toLocaleTimeString()}
+                          {typeof chat.lastMessageTime === 'string' 
+                            ? new Date(chat.lastMessageTime).toLocaleTimeString()
+                            : chat.lastMessageTime.toDate().toLocaleTimeString()
+                          }
                         </div>
                       )}
                     </div>
