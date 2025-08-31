@@ -82,7 +82,7 @@ export default function ChatSystem() {
   // Check if this is a romantic chat (user liked the other person)
   const isRomanticChat = selectedChat ? (() => {
     const likedUsers = JSON.parse(localStorage.getItem('wandermatch-liked-users') || '[]')
-    const chatIdParts = selectedChat.id.replace('chat-', '').split('-')
+    const chatIdParts = selectedChat.id?.replace('chat-', '').split('-') || []
     const partnerId = chatIdParts.find(id => id !== user?.id)
     const isRomantic = partnerId && likedUsers.includes(partnerId)
     console.log('Romantic Check:', { partnerId, likedUsers, isRomantic })
@@ -220,7 +220,7 @@ export default function ChatSystem() {
               
               // Check if this chat is with a liked user
               const likedUsers = JSON.parse(localStorage.getItem('wandermatch-liked-users') || '[]')
-              const chatIdParts = chat.id.replace('chat-', '').split('-')
+              const chatIdParts = chat.id?.replace('chat-', '').split('-') || []
               const partnerId = chatIdParts.find(id => id !== user?.id)
               const isLikedChat = partnerId && likedUsers.includes(partnerId)
               
