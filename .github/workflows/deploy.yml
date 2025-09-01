@@ -24,7 +24,12 @@ jobs:
     - name: Build
       run: |
         npm run build
+        echo "Files after build:"
         ls -la
+        echo "Checking for out directory:"
+        ls -la out/ || echo "No out directory"
+        echo "Checking .next directory:"
+        ls -la .next/ || echo "No .next directory"
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -39,10 +44,16 @@ jobs:
         
         # Copy all files from out directory
         if [ -d "out" ]; then
+          echo "Copying from out directory"
           cp -r out/* .
           cp out/.* . 2>/dev/null || true
+        elif [ -d ".next" ]; then
+          echo "Using .next directory instead"
+          cp -r .next/* .
         else
-          echo "Error: out directory not found"
+          echo "Error: Neither out nor .next directory found"
+          echo "Available directories:"
+          ls -la
           exit 1
         fi
         
