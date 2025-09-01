@@ -1,24 +1,27 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { 
-  ChatMessage, 
-  ChatRoom, 
-  sendMessage, 
-  subscribeToMessages, 
-  subscribeToChats,
-  translateMessage 
-} from '../../lib/firebase'
 import { useAuth } from '../AuthProvider'
 
-interface ChatUser {
+// Define interfaces locally since firebase lib might not exist
+interface ChatMessage {
   id: string
-  name: string
-  avatar: string
-  isOnline: boolean
-  location: string
-  lastSeen?: Date
+  chatId: string
+  senderId: string
+  senderName: string
+  content: string
+  timestamp: any
+  type: 'text'
 }
+
+interface ChatRoom {
+  id?: string
+  participantNames: string[]
+  lastMessage?: string
+  lastMessageTime?: any
+}
+
+
 
 export default function ChatSystem() {
   const [selectedChat, setSelectedChat] = useState<ChatRoom | null>(null)
@@ -117,8 +120,15 @@ export default function ChatSystem() {
       senderId: currentUserId,
       senderName: 'You',
       content: newMessage,
-      timestamp: { seconds: Date.now() / 1000, nanoseconds: 0, toDate: () => new Date(), toMillis: () => Date.now(), isEqual: () => false, toJSON: () => ({}) } as any,
-      type: 'text' as 'text'
+      timestamp: { 
+        seconds: Date.now() / 1000, 
+        nanoseconds: 0, 
+        toDate: () => new Date(), 
+        toMillis: () => Date.now(), 
+        isEqual: () => false, 
+        toJSON: () => ({}) 
+      },
+      type: 'text'
     }
 
     // Add message to current messages
@@ -234,7 +244,7 @@ export default function ChatSystem() {
                         ? 'bg-gradient-to-r from-pink-50 to-red-50 border-pink-200' 
                         : 'bg-blue-50 border-blue-200'
                       : isLikedChat
-                        ? 'border-pink-100 hover:bg-pink-25'
+                        ? 'border-pink-100 hover:bg-pink-50'
                         : 'border-gray-100 hover:bg-gray-50'
                   }`}
                 >
@@ -331,23 +341,16 @@ export default function ChatSystem() {
             {/* Messages */}
             <div className={`flex-1 overflow-y-auto p-4 space-y-4 ${
               isRomanticChat 
-                ? 'bg-gradient-to-b from-pink-50 via-red-25 to-pink-50 relative'
+                ? 'bg-gradient-to-b from-pink-50 via-red-50 to-pink-50 relative'
                 : 'bg-white'
             }`}>
               {isRomanticChat && (
-                <>
-                  <div className="absolute inset-0 opacity-10 pointer-events-none">
-                    <div className="text-6xl animate-pulse">💕</div>
-                    <div className="text-4xl animate-bounce delay-300">💖</div>
-                    <div className="text-5xl animate-pulse delay-700">💗</div>
+                <div className="text-center py-3 relative z-10">
+                  <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-300 to-red-300 rounded-full text-white text-lg font-bold shadow-lg animate-pulse">
+                    💕 ROMANTIC CHAT MODE 💕
                   </div>
-                  <div className="text-center py-3 relative z-10">
-                    <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-300 to-red-300 rounded-full text-white text-lg font-bold shadow-lg animate-pulse">
-                      💕 ROMANTIC CHAT MODE 💕
-                    </div>
-                    <p className="text-pink-700 text-sm mt-2 font-medium">You liked this person! Chat with love 💖</p>
-                  </div>
-                </>
+                  <p className="text-pink-700 text-sm mt-2 font-medium">You liked this person! Chat with love 💖</p>
+                </div>
               )}
               {messages.length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
