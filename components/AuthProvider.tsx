@@ -37,24 +37,44 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (session?.user) {
-        // Get full user profile
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single()
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         
-        if (profile) {
-          // Update online status
-          await setUserOnline(profile.id)
-          setUser({ ...profile, is_online: true })
+        if (sessionError) {
+          console.error('Session error:', sessionError)
+          setLoading(false)
+          return
         }
+        
+        if (session?.user) {
+          console.log('User session found:', session.user.id)
+          // Get full user profile
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          
+          if (profileError) {
+            console.error('Profile error:', profileError)
+          }
+          
+          if (profile) {
+            console.log('User profile loaded:', profile.name)
+            // Update online status
+            await setUserOnline(profile.id)
+            setUser({ ...profile, is_online: true })
+          } else {
+            console.log('No profile found for user')
+          }
+        } else {
+          console.log('No user session found')
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error)
+      } finally {
+        setLoading(false)
       }
-      
-      setLoading(false)
     }
 
     getInitialSession()
@@ -62,26 +82,36 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
-          // Get full user profile
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          
-          if (profile) {
-            // Update online status
-            await setUserOnline(profile.id)
-            setUser({ ...profile, is_online: true })
+        try {
+          console.log('Auth state change:', event, session?.user?.id)
+          if (session?.user) {
+            // Get full user profile
+            const { data: profile, error: profileError } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            
+            if (profileError) {
+              console.error('Profile error in auth change:', profileError)
+            }
+            
+            if (profile) {
+              // Update online status
+              await setUserOnline(profile.id)
+              setUser({ ...profile, is_online: true })
+            }
+          } else {
+            if (user) {
+              await setUserOffline(user.id)
+            }
+            setUser(null)
           }
-        } else {
-          if (user) {
-            await setUserOffline(user.id)
-          }
-          setUser(null)
+        } catch (error) {
+          console.error('Error in auth state change:', error)
+        } finally {
+          setLoading(false)
         }
-        setLoading(false)
       }
     )
 
@@ -92,23 +122,32 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (!user?.id) return
 
+    // Set user online initially
+    setUserOnline(user.id)
+
     // Heartbeat to keep user online
     const heartbeat = setInterval(() => {
-      setUserOnline(user.id)
+      if (user?.id) {
+        setUserOnline(user.id)
+      }
     }, 30000)
 
     // Handle page visibility
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setUserOffline(user.id)
-      } else {
-        setUserOnline(user.id)
+      if (user?.id) {
+        if (document.hidden) {
+          setUserOffline(user.id)
+        } else {
+          setUserOnline(user.id)
+        }
       }
     }
 
     // Handle page unload
     const handleBeforeUnload = () => {
-      setUserOffline(user.id)
+      if (user?.id) {
+        setUserOffline(user.id)
+      }
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -118,7 +157,9 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       clearInterval(heartbeat)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('beforeunload', handleBeforeUnload)
-      setUserOffline(user.id)
+      if (user?.id) {
+        setUserOffline(user.id)
+      }
     }
   }, [user?.id])
 
