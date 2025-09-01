@@ -82,7 +82,7 @@ export const signUp = async (userData: SignUpData) => {
     return { user: null, error: 'User creation failed' }
   } catch (error) {
     console.error('Signup error:', error)
-    return { user: null, error: error.message }
+    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -109,7 +109,7 @@ export const signIn = async (credentials: SignInData) => {
     return { user: data.user, error: null }
   } catch (error) {
     console.error('Signin error:', error)
-    return { user: null, error: error.message }
+     return { user: null, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -134,7 +134,7 @@ export const signOut = async () => {
     return { error: null }
   } catch (error) {
     console.error('Signout error:', error)
-    return { error: error.message }
+    return { error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -160,6 +160,6 @@ export const getCurrentUser = async () => {
     return { user: null, error: null }
   } catch (error) {
     console.error('Get user error:', error)
-    return { user: null, error: error.message }
+    return { user: null, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
