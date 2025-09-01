@@ -645,7 +645,7 @@ export async function setUserOnline(userId: string) {
     })
     .eq('id', userId);
 
-  if (error) throw error;
+  if (error) console.error('Error setting user online:', error);
 }
 
 export async function setUserOffline(userId: string) {
@@ -657,13 +657,29 @@ export async function setUserOffline(userId: string) {
     })
     .eq('id', userId);
 
-  if (error) throw error;
+  if (error) console.error('Error setting user offline:', error);
 }
 
-// Check if user was recently online (within 5 minutes)
+// Check if user was recently online (within 2 minutes)
 export function isRecentlyOnline(lastSeen: string): boolean {
-  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-  return new Date(lastSeen) > fiveMinutesAgo;
+  const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+  return new Date(lastSeen) > twoMinutesAgo;
+}
+
+// Get users with real online status
+export const getUsersWithOnlineStatus = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('is_online', { ascending: false })
+  
+  if (error) throw error
+  
+  // Update online status based on last_seen for users marked as online
+  return data.map(user => ({
+    ...user,
+    is_online: user.is_online && user.last_seen ? isRecentlyOnline(user.last_seen) : false
+  }))
 }
 
 export async function isMutualLike(user1Id: string, user2Id: string) {
