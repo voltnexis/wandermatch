@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useAuth } from './AuthProvider'
 import { Menu, X, Globe, Heart, MapPin, User, LogOut } from 'lucide-react'
 
@@ -30,24 +31,24 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <a href="/" className="text-gray-700 hover:text-primary-600 transition-colors">
+            <Link href="/" className="text-gray-700 hover:text-primary-600 transition-colors">
               Home
-            </a>
-            <a href="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
+            </Link>
+            <Link href="/features" className="text-gray-700 hover:text-primary-600 transition-colors">
               Features
-            </a>
-            <a href="/about" className="text-gray-700 hover:text-primary-600 transition-colors">
+            </Link>
+            <Link href="/about" className="text-gray-700 hover:text-primary-600 transition-colors">
               About
-            </a>
-            <a href="/safety" className="text-gray-700 hover:text-primary-600 transition-colors">
+            </Link>
+            <Link href="/safety" className="text-gray-700 hover:text-primary-600 transition-colors">
               Safety
-            </a>
-            <a href="/pricing" className="text-gray-700 hover:text-primary-600 transition-colors">
+            </Link>
+            <Link href="/pricing" className="text-gray-700 hover:text-primary-600 transition-colors">
               Pricing
-            </a>
-            <a href="/contact" className="text-gray-700 hover:text-primary-600 transition-colors">
+            </Link>
+            <Link href="/contact" className="text-gray-700 hover:text-primary-600 transition-colors">
               Contact
-            </a>
+            </Link>
           </nav>
 
           {/* CTA Buttons */}
@@ -68,14 +69,14 @@ export default function Header() {
                 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-                    <a href="/dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                    <Link href="/dashboard" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                       <User className="inline w-4 h-4 mr-2" />
                       Dashboard
-                    </a>
-                    <a href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                    </Link>
+                    <Link href="/profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                       <User className="inline w-4 h-4 mr-2" />
                       Profile
-                    </a>
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
@@ -88,12 +89,12 @@ export default function Header() {
               </div>
             ) : (
               <>
-                <a href="/signin" className="text-primary-600 hover:text-primary-700 font-medium">
+                <Link href="/signin" className="text-primary-600 hover:text-primary-700 font-medium">
                   Sign In
-                </a>
-                <a href="/signup" className="btn-primary">
+                </Link>
+                <Link href="/signup" className="btn-primary">
                   Sign Up
-                </a>
+                </Link>
               </>
             )}
           </div>
@@ -111,33 +112,33 @@ export default function Header() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100">
             <div className="flex flex-col space-y-4">
-              <a href="/" className="text-gray-700 hover:text-primary-600">
+              <Link href="/" className="text-gray-700 hover:text-primary-600">
                 Home
-              </a>
-              <a href="/features" className="text-gray-700 hover:text-primary-600">
+              </Link>
+              <Link href="/features" className="text-gray-700 hover:text-primary-600">
                 Features
-              </a>
-              <a href="/about" className="text-gray-700 hover:text-primary-600">
+              </Link>
+              <Link href="/about" className="text-gray-700 hover:text-primary-600">
                 About
-              </a>
-              <a href="/safety" className="text-gray-700 hover:text-primary-600">
+              </Link>
+              <Link href="/safety" className="text-gray-700 hover:text-primary-600">
                 Safety
-              </a>
-              <a href="/pricing" className="text-gray-700 hover:text-primary-600">
+              </Link>
+              <Link href="/pricing" className="text-gray-700 hover:text-primary-600">
                 Pricing
-              </a>
-              <a href="/contact" className="text-gray-700 hover:text-primary-600">
+              </Link>
+              <Link href="/contact" className="text-gray-700 hover:text-primary-600">
                 Contact
-              </a>
+              </Link>
               <div className="flex flex-col space-y-2 pt-4">
                 {user ? (
                   <>
-                    <a href="/dashboard" className="text-primary-600 font-medium text-left">
+                    <Link href="/dashboard" className="text-primary-600 font-medium text-left">
                       Dashboard
-                    </a>
-                    <a href="/profile" className="text-primary-600 font-medium text-left">
+                    </Link>
+                    <Link href="/profile" className="text-primary-600 font-medium text-left">
                       Profile
-                    </a>
+                    </Link>
                     <button
                       onClick={handleSignOut}
                       className="text-gray-600 font-medium text-left"
@@ -147,12 +148,12 @@ export default function Header() {
                   </>
                 ) : (
                   <>
-                    <a href="/signin" className="text-primary-600 font-medium text-left">
+                    <Link href="/signin" className="text-primary-600 font-medium text-left">
                       Sign In
-                    </a>
-                    <a href="/signup" className="btn-primary text-center">
+                    </Link>
+                    <Link href="/signup" className="btn-primary text-center">
                       Sign Up
-                    </a>
+                    </Link>
                   </>
                 )}
               </div>
