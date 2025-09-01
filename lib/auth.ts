@@ -63,12 +63,12 @@ export const signUp = async (userData: SignUpData) => {
       if (profileError) throw profileError
 
       // 4. Add user interests
-      if (userData.interests.length > 0) {
+      if (userData.interests.length > 0 && authData.user) {
         const interests = userData.interests.map(interest => ({
-          user_id: authData.user.id,
+          user_id: authData.user!.id,
           interest: interest
         }))
-
+        
         const { error: interestsError } = await supabase
           .from('user_interests')
           .insert(interests)
