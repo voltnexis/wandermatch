@@ -85,7 +85,8 @@ export default function DashboardPage() {
       {/* Navigation Tabs */}
       <div className="bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex space-x-1">
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex space-x-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -105,6 +106,29 @@ export default function DashboardPage() {
                   {activeTab === tab.id && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-primary-500 to-accent-500 rounded-full"></div>
                   )}
+                </button>
+              );
+            })}
+          </nav>
+          
+          {/* Mobile Navigation - 3 per line */}
+          <nav className="lg:hidden grid grid-cols-3 gap-1 py-2">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center py-3 px-2 font-medium text-xs transition-all duration-300 rounded-xl ${
+                    activeTab === tab.id
+                      ? 'bg-white text-primary-600 shadow-lg'
+                      : 'text-gray-600 hover:text-primary-600 hover:bg-white/50'
+                  }`}
+                >
+                  <div className={`p-2 rounded-lg bg-gradient-to-r ${tab.color} mb-1`}>
+                    <Icon className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="font-semibold text-center leading-tight">{tab.label}</span>
                 </button>
               );
             })}
