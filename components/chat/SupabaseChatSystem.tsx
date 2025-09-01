@@ -19,6 +19,7 @@ interface ChatMessage {
   content: string;
   sender: any;
   created_at: string;
+  message_type?: string;
 }
 
 export default function SupabaseChatSystem() {
