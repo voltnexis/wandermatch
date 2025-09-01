@@ -250,7 +250,7 @@ export default function TravelersGrid({ onSwitchToChat }: TravelersGridProps) {
                   )}
                 </div>
               </button>
-              {Math.random() > 0.6 && (
+              {traveler.is_online && (
                 <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 rounded-full border-3 border-white flex items-center justify-center">
                   <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                 </div>
