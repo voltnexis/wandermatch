@@ -44,7 +44,7 @@ export default function FollowingGrid({ onSwitchToChat }: FollowingGridProps) {
     
     try {
       const followedUsers = await getFollowing(user.id);
-      setFollowing(followedUsers as FollowedUser[]);
+      setFollowing(followedUsers as unknown as FollowedUser[]);
     } catch (error) {
       console.error('Error loading following:', error);
     } finally {
