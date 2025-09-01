@@ -94,8 +94,8 @@ export default function ProfileUpdate() {
         getFollowing(user.id),
         getFollowers(user.id)
       ]);
-      setFollowing(followingUsers);
-      setFollowers(followerUsers);
+      setFollowing(followingUsers as unknown as UserProfile[]);
+      setFollowers(followerUsers as unknown as UserProfile[]);
     } catch (error) {
       console.error('Error loading followers/following:', error);
     }
