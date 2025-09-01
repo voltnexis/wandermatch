@@ -253,7 +253,9 @@ export default function CommunityFeed() {
             className="w-full p-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
             rows={3}
           />
-          <div className="flex gap-3">
+          
+          {/* Desktop Layout */}
+          <div className="hidden lg:flex gap-3">
             <div className="flex-1 relative">
               <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
               <input
@@ -282,14 +284,50 @@ export default function CommunityFeed() {
                 Post
               </button>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="hidden"
-            />
           </div>
+          
+          {/* Mobile Layout */}
+          <div className="lg:hidden space-y-3">
+            {/* Location input */}
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={locationTag}
+                onChange={(e) => setLocationTag(e.target.value)}
+                placeholder="Tag a location (optional)"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            
+            {/* Buttons row */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-gray-500 text-white px-4 py-3 rounded-xl hover:bg-gray-600 flex items-center gap-2 flex-1"
+              >
+                <ImageIcon className="w-4 h-4" />
+                Image
+              </button>
+              <button
+                onClick={handleCreatePost}
+                disabled={!newPost.trim()}
+                className="bg-gradient-to-r from-primary-500 to-accent-500 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 flex items-center gap-2 disabled:opacity-50 flex-1"
+              >
+                <Send className="w-4 h-4" />
+                Post
+              </button>
+            </div>
+          </div>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageSelect}
+            className="hidden"
+          />
           
           {imagePreview && (
             <div className="mt-4 relative">
