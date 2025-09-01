@@ -21,7 +21,8 @@ interface UserProfileProps {
 
 export default function UserProfile({ user, isFollowing = false, showFollowStats = false }: UserProfileProps) {
   const [following, setFollowing] = useState(isFollowing);
-  // Removed unused state variables
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
 
   const handleFollow = () => {
     setFollowing(!following);
