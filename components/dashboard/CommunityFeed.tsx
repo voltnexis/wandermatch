@@ -338,12 +338,12 @@ export default function CommunityFeed() {
 
             <div className="mb-4">
               <p className="text-gray-800 leading-relaxed">{post.content}</p>
-              {post.image_url && (
+              {(post as any).image_url && (
                 <img 
-                  src={post.image_url} 
+                  src={(post as any).image_url} 
                   alt="Post image" 
                   className="w-full max-h-64 object-cover rounded-lg mt-3 cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setEnlargedImage(post.image_url)}
+                  onClick={() => setEnlargedImage((post as any).image_url || null)}
                 />
               )}
             </div>
