@@ -4,6 +4,11 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -22,27 +27,22 @@ jobs:
       run: npm ci
       
     - name: Build
-      run: |
-        npm run build
-        echo "Files after build:"
-        ls -la
-        echo "Checking for out directory:"
-        ls -la out/ || echo "No out directory"
-        echo "Checking .next directory:"
-        ls -la .next/ || echo "No .next directory"
+      run: npm run build
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         
-    - name: Deploy to Main Branch
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
+    - name: Setup Pages
+      uses: actions/configure-pages@v3
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v2
+      with:
+        path: ./out
         
-        # Remove existing files except .git
-        find . -maxdepth 1 ! -name '.git*' ! -name '.' -exec rm -rf {} +
-        
-        # Copy all files from out directory
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v2
         if [ -d "out" ]; then
           echo "Copying from out directory"
           cp -r out/* .
