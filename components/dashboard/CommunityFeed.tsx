@@ -10,6 +10,7 @@ interface Post {
   content: string;
   location_tag?: string;
   created_at: string;
+  image_url?: string;
   user: {
     id: string;
     name: string;
