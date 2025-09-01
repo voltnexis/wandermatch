@@ -144,7 +144,7 @@ export default function SupabaseChatSystem() {
                         ? 'bg-gradient-to-r from-pink-50 to-red-50 border-pink-200' 
                         : 'bg-blue-50 border-blue-200'
                       : room.is_romantic
-                        ? 'border-pink-100 hover:bg-pink-25'
+                        ? 'border-pink-100 hover:bg-pink-50'
                         : 'border-gray-100 hover:bg-gray-50'
                   }`}
                 >
@@ -210,7 +210,7 @@ export default function SupabaseChatSystem() {
             {/* Messages */}
             <div className={`flex-1 overflow-y-auto p-4 space-y-4 relative ${
               selectedRoom.is_romantic 
-                ? 'bg-gradient-to-b from-pink-50 via-red-25 to-pink-50'
+                ? 'bg-gradient-to-b from-pink-50 via-red-50 to-pink-50'
                 : 'bg-white'
             }`}>
               {/* Love background for romantic mode */}
@@ -234,7 +234,7 @@ export default function SupabaseChatSystem() {
                 </div>
               )}
               
-              {messages.map((message) => {
+              {messages.map((message: any) => {
                 // System message (20-day notification)
                 if (!message.sender || message.message_type === 'system') {
                   return (
