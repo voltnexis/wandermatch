@@ -627,3 +627,13 @@ export async function getUserById(userId: string) {
   if (error) throw error;
   return data;
 }
+
+
+export async function isMutualLike(user1Id: string, user2Id: string) {
+  const [like1, like2] = await Promise.all([
+    supabase.from('user_likes').select('id').eq('liker_id', user1Id).eq('liked_id', user2Id).single(),
+    supabase.from('user_likes').select('id').eq('liker_id', user2Id).eq('liked_id', user1Id).single()
+  ]);
+
+  return !!(like1.data && like2.data);
+}
