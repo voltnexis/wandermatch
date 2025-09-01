@@ -180,7 +180,6 @@ export async function addLocationToTravelPlan(userId: string, locationName: stri
 }
 
 export async function updateUserProfile(userId: string, updates: any) {
-  // Remove interests field if it exists since it might not be in the table
   const { interests, ...cleanUpdates } = updates;
   
   const { data, error } = await supabase
@@ -195,13 +194,11 @@ export async function updateUserProfile(userId: string, updates: any) {
 }
 
 export async function uploadProfileImage(userId: string, file: File): Promise<string> {
-  // Validate file size (max 5MB)
   const maxSize = 5 * 1024 * 1024;
   if (file.size > maxSize) {
     throw new Error('File size must be less than 5MB');
   }
 
-  // Validate file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
     throw new Error('Only JPEG, PNG, and WebP images are allowed');
@@ -234,7 +231,6 @@ export async function getAllUsers() {
   return data;
 }
 
-// Initialize demo data (called from SQL schema)
 export async function initializeDemoData() {
   try {
     const { error } = await supabase.rpc('create_demo_users');
@@ -276,7 +272,7 @@ export async function getFollowing(userId: string) {
     .eq('follower_id', userId);
 
   if (error) throw error;
-  return data.map(item => ({
+  return data.map((item: any) => ({
     ...item.following,
     is_online: item.following.is_online || false
   }));
@@ -292,7 +288,7 @@ export async function getFollowers(userId: string) {
     .eq('following_id', userId);
 
   if (error) throw error;
-  return data.map(item => item.follower);
+  return data.map((item: any) => item.follower);
 }
 
 export async function isFollowing(followerId: string, followingId: string) {
@@ -318,7 +314,6 @@ export async function likeUser(likerId: string, likedId: string) {
   if (error) throw error;
   
   try {
-    // Check if it's a mutual like (creates a match)
     const { data: mutualLike, error: mutualError } = await supabase
       .from('user_likes')
       .select('id')
@@ -327,16 +322,12 @@ export async function likeUser(likerId: string, likedId: string) {
       .single();
 
     if (mutualLike && !mutualError) {
-      // Create match
       await createMatch(likerId, likedId);
-      
-      // Create or update chat room to romantic mode
       const chatRoom = await createChatRoom(likerId, likedId, true);
       console.log('Romantic chat room created:', chatRoom);
     }
   } catch (mutualCheckError) {
     console.error('Error checking mutual like:', mutualCheckError);
-    // Continue without creating match if check fails
   }
 
   return data;
@@ -351,24 +342,10 @@ export async function unlikeUser(likerId: string, likedId: string) {
 
   if (error) throw error;
 
-  // Remove match if it exists
   await supabase
     .from('matches')
     .delete()
     .or(`and(user1_id.eq.${likerId},user2_id.eq.${likedId}),and(user1_id.eq.${likedId},user2_id.eq.${likerId})`);
-}
-
-export async function getLikedUsers(userId: string) {
-  const { data, error } = await supabase
-    .from('user_likes')
-    .select(`
-      liked_id,
-      liked:users!user_likes_liked_id_fkey(*)
-    `)
-    .eq('liker_id', userId);
-
-  if (error) throw error;
-  return data.map(item => item.liked);
 }
 
 export async function isLiked(likerId: string, likedId: string) {
@@ -383,28 +360,37 @@ export async function isLiked(likerId: string, likedId: string) {
   return !!data;
 }
 
-export async function isMutualLike(user1Id: string, user2Id: string) {
+export async function getLikedUsers(userId: string) {
   const { data, error } = await supabase
-    .from('matches')
-    .select('id')
-    .or(`and(user1_id.eq.${user1Id},user2_id.eq.${user2Id}),and(user1_id.eq.${user2Id},user2_id.eq.${user1Id})`)
-    .single();
+    .from('user_likes')
+    .select(`
+      liked_id,
+      liked:users!user_likes_liked_id_fkey(*)
+    `)
+    .eq('liker_id', userId);
 
-  if (error && error.code !== 'PGRST116') throw error;
-  return !!data;
+  if (error) throw error;
+  return data.map((item: any) => item.liked);
 }
 
-// Community functions
-export async function createPost(userId: string, content: string, locationTag?: string, imageFile?: File) {
-  let imageUrl = null;
-  
-  if (imageFile) {
-    imageUrl = await uploadPostImage(userId, imageFile);
-  }
-  
+export async function getUsersWhoLikedMe(userId: string) {
   const { data, error } = await supabase
-    .from('community_posts')
-    .insert([{ user_id: userId, content, location_tag: locationTag, image_url: imageUrl }])
+    .from('user_likes')
+    .select(`
+      liker_id,
+      liker:users!user_likes_liker_id_fkey(*)
+    `)
+    .eq('liked_id', userId);
+
+  if (error) throw error;
+  return data.map((item: any) => item.liker);
+}
+
+// Match functions
+export async function createMatch(user1Id: string, user2Id: string) {
+  const { data, error } = await supabase
+    .from('matches')
+    .insert([{ user1_id: user1Id, user2_id: user2Id }])
     .select()
     .single();
 
@@ -412,64 +398,143 @@ export async function createPost(userId: string, content: string, locationTag?: 
   return data;
 }
 
-export async function uploadPostImage(userId: string, file: File): Promise<string> {
-  // Convert to WebP
-  const webpFile = await convertToWebP(file);
-  
-  const fileName = `${userId}-${Date.now()}.webp`;
-  const filePath = `post-images/${fileName}`;
+// Chat functions
+export async function createChatRoom(user1Id: string, user2Id: string, isRomantic: boolean = false) {
+  const { data: existingRoom } = await supabase
+    .from('chat_rooms')
+    .select('*')
+    .or(`and(participant1_id.eq.${user1Id},participant2_id.eq.${user2Id}),and(participant1_id.eq.${user2Id},participant2_id.eq.${user1Id})`)
+    .single();
 
-  const { error: uploadError } = await supabase.storage
-    .from('post-images')
-    .upload(filePath, webpFile);
+  if (existingRoom) {
+    if (isRomantic && !existingRoom.is_romantic) {
+      const { data, error } = await supabase
+        .from('chat_rooms')
+        .update({ is_romantic: true })
+        .eq('id', existingRoom.id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+    return existingRoom;
+  }
 
-  if (uploadError) throw uploadError;
+  const { data, error } = await supabase
+    .from('chat_rooms')
+    .insert([{
+      participant1_id: user1Id,
+      participant2_id: user2Id,
+      is_romantic: isRomantic
+    }])
+    .select(`
+      *,
+      participant1:users!chat_rooms_participant1_id_fkey(*),
+      participant2:users!chat_rooms_participant2_id_fkey(*)
+    `)
+    .single();
 
-  const { data } = supabase.storage
-    .from('post-images')
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
+  if (error) throw error;
+  return data;
 }
 
-async function convertToWebP(file: File): Promise<File> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d')!;
-    const img = new Image();
-    
-    img.onload = () => {
-      // Resize if too large
-      const maxWidth = 800;
-      const maxHeight = 600;
-      let { width, height } = img;
-      
-      if (width > maxWidth || height > maxHeight) {
-        const ratio = Math.min(maxWidth / width, maxHeight / height);
-        width *= ratio;
-        height *= ratio;
-      }
-      
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-      
-      canvas.toBlob((blob) => {
-        const webpFile = new File([blob!], 'image.webp', { type: 'image/webp' });
-        resolve(webpFile);
-      }, 'image/webp', 0.8);
-    };
-    
-    img.src = URL.createObjectURL(file);
-  });
+export async function getChatRooms(userId: string) {
+  const { data, error } = await supabase
+    .from('chat_rooms')
+    .select(`
+      *,
+      participant1:users!chat_rooms_participant1_id_fkey(*),
+      participant2:users!chat_rooms_participant2_id_fkey(*)
+    `)
+    .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`)
+    .order('last_message_time', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getChatMessages(roomId: string) {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .select(`
+      *,
+      sender:users!chat_messages_sender_id_fkey(*)
+    `)
+    .eq('room_id', roomId)
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function sendChatMessage(roomId: string, senderId: string, content: string) {
+  const { data, error } = await supabase
+    .from('chat_messages')
+    .insert([{
+      room_id: roomId,
+      sender_id: senderId,
+      content: content
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  await supabase
+    .from('chat_rooms')
+    .update({
+      last_message: content,
+      last_message_time: new Date().toISOString()
+    })
+    .eq('id', roomId);
+
+  return data;
+}
+
+// Community functions
+export async function createPost(userId: string, content: string, locationTag?: string, image?: File) {
+  let imageUrl = null;
+  
+  if (image) {
+    const fileExt = image.name.split('.').pop();
+    const fileName = `${userId}-${Date.now()}.${fileExt}`;
+    const filePath = `post-images/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('post-images')
+      .upload(filePath, image);
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage
+      .from('post-images')
+      .getPublicUrl(filePath);
+
+    imageUrl = data.publicUrl;
+  }
+
+  const { data, error } = await supabase
+    .from('posts')
+    .insert([{
+      user_id: userId,
+      content: content,
+      location_tag: locationTag,
+      image_url: imageUrl
+    }])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 export async function getPosts() {
   const { data, error } = await supabase
-    .from('community_posts')
+    .from('posts')
     .select(`
       *,
-      user:users(*)
+      user:users!posts_user_id_fkey(*)
     `)
     .order('created_at', { ascending: false });
 
@@ -477,10 +542,39 @@ export async function getPosts() {
   return data;
 }
 
+export async function getUserPosts(userId: string) {
+  const { data, error } = await supabase
+    .from('posts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserStats(userId: string) {
+  const [followersResult, followingResult] = await Promise.all([
+    supabase.from('user_follows').select('id').eq('following_id', userId),
+    supabase.from('user_follows').select('id').eq('follower_id', userId)
+  ]);
+
+  return {
+    followers: followersResult.data?.length || 0,
+    following: followingResult.data?.length || 0,
+    likes: 0
+  };
+}
+
+// Location rating functions
 export async function rateLocation(userId: string, locationName: string, rating: number) {
   const { data, error } = await supabase
     .from('location_ratings')
-    .upsert([{ user_id: userId, location_name: locationName, rating }])
+    .upsert([{
+      user_id: userId,
+      location_name: locationName,
+      rating: rating
+    }])
     .select()
     .single();
 
@@ -496,232 +590,15 @@ export async function getLocationRating(locationName: string) {
 
   if (error) throw error;
   
-  if (data.length === 0) return { average: 0, count: 0 };
-  
-  const average = data.reduce((sum, item) => sum + item.rating, 0) / data.length;
-  return { average: Math.round(average * 10) / 10, count: data.length };
-}
-
-// Chat functions
-export async function createChatRoom(user1Id: string, user2Id: string, isRomantic = false) {
-  const { data, error } = await supabase
-    .from('chat_rooms')
-    .upsert([{ 
-      participant1_id: user1Id < user2Id ? user1Id : user2Id,
-      participant2_id: user1Id < user2Id ? user2Id : user1Id,
-      is_romantic: isRomantic,
-      romantic_started_by: isRomantic ? user1Id : null,
-      romantic_started_at: isRomantic ? new Date().toISOString() : null
-    }], {
-      onConflict: 'participant1_id,participant2_id'
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function sendChatMessage(chatRoomId: string, senderId: string, content: string) {
-  const { data, error } = await supabase
-    .from('chat_messages')
-    .insert([{ chat_room_id: chatRoomId, sender_id: senderId, content }])
-    .select()
-    .single();
-
-  if (error) throw error;
-  
-  // Update last message in chat room
-  await supabase
-    .from('chat_rooms')
-    .update({ last_message: content, last_message_time: new Date().toISOString() })
-    .eq('id', chatRoomId);
-
-  return data;
-}
-
-export async function getChatRooms(userId: string) {
-  const { data, error } = await supabase
-    .from('chat_rooms')
-    .select(`
-      *,
-      participant1:users!chat_rooms_participant1_id_fkey(*),
-      participant2:users!chat_rooms_participant2_id_fkey(*)
-    `)
-    .or(`participant1_id.eq.${userId},participant2_id.eq.${userId}`);
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getChatMessages(chatRoomId: string) {
-  // Check if 20-day message should be sent
-  await checkAndSendTwentyDayMessage(chatRoomId);
-  
-  const { data, error } = await supabase
-    .from('chat_messages')
-    .select(`
-      *,
-      sender:users(*)
-    `)
-    .eq('chat_room_id', chatRoomId)
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data;
-}
-
-export async function checkAndSendTwentyDayMessage(chatRoomId: string) {
-  try {
-    // Check if room needs 20-day message
-    const { data: room, error: roomError } = await supabase
-      .from('chat_rooms')
-      .select('*, romantic_starter:users!chat_rooms_romantic_started_by_fkey(name)')
-      .eq('id', chatRoomId)
-      .eq('is_romantic', true)
-      .eq('twenty_day_message_sent', false)
-      .single();
-
-    if (roomError || !room) return;
-
-    // Check if 20 days have passed
-    const twentyDaysAgo = new Date();
-    twentyDaysAgo.setDate(twentyDaysAgo.getDate() - 20);
-    
-    if (new Date(room.romantic_started_at) <= twentyDaysAgo) {
-      // Send system message
-      const systemMessage = `${room.romantic_starter.name} has been in romantic mode with you for 20 days 💕`;
-      
-      await supabase
-        .from('chat_messages')
-        .insert([{ 
-          chat_room_id: chatRoomId, 
-          sender_id: null, // System message
-          content: systemMessage,
-          message_type: 'system'
-        }]);
-
-      // Mark as sent
-      await supabase
-        .from('chat_rooms')
-        .update({ twenty_day_message_sent: true })
-        .eq('id', chatRoomId);
-    }
-  } catch (error) {
-    console.error('Error checking 20-day message:', error);
+  if (!data || data.length === 0) {
+    return { average: 0, count: 0 };
   }
-}
 
-export async function getUserPosts(userId: string) {
-  const { data, error } = await supabase
-    .from('community_posts')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-  return data;
-}
-
-// Match functions
-export async function createMatch(user1Id: string, user2Id: string) {
-  const { data, error } = await supabase
-    .from('matches')
-    .insert([{ 
-      user1_id: user1Id, 
-      user2_id: user2Id, 
-      status: 'matched',
-      match_score: 85 
-    }])
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function getMatches(userId: string) {
-  const { data, error } = await supabase
-    .from('matches')
-    .select(`
-      *,
-      user1:users!matches_user1_id_fkey(*),
-      user2:users!matches_user2_id_fkey(*)
-    `)
-    .or(`user1_id.eq.${userId},user2_id.eq.${userId}`)
-    .eq('status', 'matched');
-
-  if (error) throw error;
-  return data;
-}
-
-// User stats
-export async function getUserStats(userId: string) {
-  const [followersCount, followingCount, likesCount] = await Promise.all([
-    supabase.from('user_follows').select('id', { count: 'exact' }).eq('following_id', userId),
-    supabase.from('user_follows').select('id', { count: 'exact' }).eq('follower_id', userId),
-    supabase.from('user_likes').select('id', { count: 'exact' }).eq('liked_id', userId)
-  ]);
-
+  const ratings = data.map((r: any) => r.rating);
+  const average = ratings.reduce((sum: number, rating: number) => sum + rating, 0) / ratings.length;
+  
   return {
-    followers: followersCount.count || 0,
-    following: followingCount.count || 0,
-    likes: likesCount.count || 0
+    average: Math.round(average * 10) / 10,
+    count: ratings.length
   };
-}
-
-// Get user by ID
-export async function getUserById(userId: string) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-// Get users who liked the current user
-export async function getUsersWhoLikedMe(userId: string) {
-  const { data, error } = await supabase
-    .from('user_likes')
-    .select(`
-      liker_id,
-      liker:users!user_likes_liker_id_fkey(*)
-    `)
-    .eq('liked_id', userId);
-
-  if (error) throw error;
-  return data.map(item => item.liker);
-}
-
-// Update user online status
-export async function updateOnlineStatus(userId: string, isOnline: boolean) {
-  const { error } = await supabase
-    .from('users')
-    .update({ 
-      is_online: isOnline,
-      last_seen: new Date().toISOString()
-    })
-    .eq('id', userId);
-
-  if (error) throw error;
-}
-
-// Update chat room to romantic mode
-export async function updateChatRoomToRomantic(chatRoomId: string, startedBy: string) {
-  const { data, error } = await supabase
-    .from('chat_rooms')
-    .update({
-      is_romantic: true,
-      romantic_started_by: startedBy,
-      romantic_started_at: new Date().toISOString()
-    })
-    .eq('id', chatRoomId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
 }
