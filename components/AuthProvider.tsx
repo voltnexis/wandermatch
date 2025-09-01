@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { supabase, updateOnlineStatus } from '../lib/supabase'
+import { supabase, setUserOnline, setUserOffline } from '../lib/supabase'
 import { User } from '../lib/supabase'
 
 interface AuthContextType {
@@ -49,7 +49,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         
         if (profile) {
           // Update online status
-          await updateOnlineStatus(profile.id, true)
+          await setUserOnline(profile.id)
           setUser({ ...profile, is_online: true })
         }
       }
@@ -72,10 +72,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           
           if (profile) {
             // Update online status
-            await updateOnlineStatus(profile.id, true)
+            await setUserOnline(profile.id)
             setUser({ ...profile, is_online: true })
           }
         } else {
+          if (user) {
+            await setUserOffline(user.id)
+          }
           setUser(null)
         }
         setLoading(false)
@@ -85,10 +88,44 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     return () => subscription.unsubscribe()
   }, [])
 
+  // Online presence tracking
+  useEffect(() => {
+    if (!user?.id) return
+
+    // Heartbeat to keep user online
+    const heartbeat = setInterval(() => {
+      setUserOnline(user.id)
+    }, 30000)
+
+    // Handle page visibility
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setUserOffline(user.id)
+      } else {
+        setUserOnline(user.id)
+      }
+    }
+
+    // Handle page unload
+    const handleBeforeUnload = () => {
+      setUserOffline(user.id)
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      clearInterval(heartbeat)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      setUserOffline(user.id)
+    }
+  }, [user?.id])
+
   const handleSignOut = async () => {
     if (user) {
       // Update offline status
-      await updateOnlineStatus(user.id, false)
+      await setUserOffline(user.id)
     }
 
     await supabase.auth.signOut()
