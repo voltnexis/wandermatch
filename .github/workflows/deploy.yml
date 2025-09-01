@@ -33,12 +33,19 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
+        
+        # Remove existing files except .git
+        find . -maxdepth 1 ! -name '.git*' ! -name '.' -exec rm -rf {} +
+        
+        # Copy all files from out directory
         if [ -d "out" ]; then
           cp -r out/* .
+          cp out/.* . 2>/dev/null || true
         else
-          echo "No out directory found, using .next/static"
-          cp -r .next/static/* . || echo "No static files found"
+          echo "Error: out directory not found"
+          exit 1
         fi
+        
         git add .
         git commit -m "Deploy to GitHub Pages" || exit 0
         git push
