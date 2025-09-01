@@ -35,7 +35,7 @@ export default function MatchesGrid({ onSwitchToChat }: { onSwitchToChat?: () =>
       // Filter to only show users who liked back (mutual likes)
       const mutualLikes = [];
       for (const likedUser of whoLikedMe) {
-        const isMutual = await isLiked(user.id, likedUser.id);
+        const isMutual = await isLiked(user.id, (likedUser as any).id);
         if (isMutual) {
           mutualLikes.push(likedUser);
         }
