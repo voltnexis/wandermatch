@@ -126,7 +126,8 @@ export default function TravelersGrid({ onSwitchToChat }: TravelersGridProps) {
 
   const loadTravelers = async () => {
     try {
-      const data = await getAllUsers();
+      const { getUsersWithOnlineStatus } = await import('@/lib/supabase');
+      const data = await getUsersWithOnlineStatus();
       const filteredData = data.filter((u: User) => u.id !== user?.id);
       setTravelers(filteredData);
     } catch (error) {
