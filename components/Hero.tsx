@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ArrowRight, Play, MapPin, Users, Heart } from 'lucide-react'
 import { motion } from 'framer-motion'
 
@@ -57,14 +58,14 @@ export default function Hero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <a href="/dashboard" className="btn-primary text-lg px-8 py-4 flex items-center">
+            <Link href="/dashboard" className="btn-primary text-lg px-8 py-4 flex items-center">
               Explore Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
-            </a>
-            <a href="/download" className="btn-secondary text-lg px-8 py-4 flex items-center">
+            </Link>
+            <Link href="/download" className="btn-secondary text-lg px-8 py-4 flex items-center">
               <Play className="mr-2 h-5 w-5" />
               Download App
-            </a>
+            </Link>
           </div>
 
           {/* Stats */}
