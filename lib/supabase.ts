@@ -666,21 +666,7 @@ export function isRecentlyOnline(lastSeen: string): boolean {
   return new Date(lastSeen) > twoMinutesAgo;
 }
 
-// Get users with real online status
-export const getUsersWithOnlineStatus = async () => {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .order('is_online', { ascending: false })
-  
-  if (error) throw error
-  
-  // Update online status based on last_seen for users marked as online
-  return data.map(user => ({
-    ...user,
-    is_online: user.is_online && user.last_seen ? isRecentlyOnline(user.last_seen) : false
-  }))
-}
+
 
 export async function isMutualLike(user1Id: string, user2Id: string) {
   const [like1, like2] = await Promise.all([
