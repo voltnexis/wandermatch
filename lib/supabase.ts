@@ -602,3 +602,28 @@ export async function getLocationRating(locationName: string) {
     count: ratings.length
   };
 }
+
+
+// Additional required functions
+export async function updateOnlineStatus(userId: string, isOnline: boolean) {
+  const { error } = await supabase
+    .from('users')
+    .update({ 
+      is_online: isOnline, 
+      last_seen: new Date().toISOString() 
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+export async function getUserById(userId: string) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
