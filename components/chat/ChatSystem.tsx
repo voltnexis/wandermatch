@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useAuth } from '../AuthProvider'
 
+
 // Define interfaces locally since firebase lib might not exist
 interface ChatMessage {
   id: string
