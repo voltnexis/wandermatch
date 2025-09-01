@@ -29,6 +29,7 @@ export default function SupabaseChatSystem() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showChatOnMobile, setShowChatOnMobile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -112,8 +113,10 @@ export default function SupabaseChatSystem() {
         ? 'bg-gradient-to-br from-pink-100 via-red-50 to-pink-100 border-2 border-pink-300'
         : 'bg-white'
     }`}>
-      {/* Chat List */}
-      <div className={`w-1/3 border-r ${
+      {/* Chat List - Desktop: always visible, Mobile: hidden when chat is open */}
+      <div className={`lg:w-1/3 w-full border-r lg:block ${
+        showChatOnMobile ? 'hidden' : 'block'
+      } ${
         selectedRoom?.is_romantic ? 'border-pink-300 bg-pink-50/50' : 'border-gray-200'
       }`}>
         <div className={`p-6 border-b ${
@@ -138,7 +141,10 @@ export default function SupabaseChatSystem() {
               return (
                 <div
                   key={room.id}
-                  onClick={() => setSelectedRoom(room)}
+                  onClick={() => {
+                    setSelectedRoom(room);
+                    setShowChatOnMobile(true);
+                  }}
                   className={`p-4 border-b cursor-pointer transition-colors ${
                     selectedRoom?.id === room.id 
                       ? room.is_romantic 
@@ -180,8 +186,10 @@ export default function SupabaseChatSystem() {
         </div>
       </div>
 
-      {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      {/* Chat Area - Desktop: always visible, Mobile: shown when chat is selected */}
+      <div className={`flex-1 flex flex-col lg:block ${
+        showChatOnMobile ? 'block' : 'hidden lg:flex'
+      }`}>
         {selectedRoom ? (
           <>
             {/* Chat Header */}
@@ -191,6 +199,13 @@ export default function SupabaseChatSystem() {
                 : 'bg-gray-50 border-gray-200'
             }`}>
               <div className="flex items-center space-x-3">
+                {/* Back button for mobile */}
+                <button
+                  onClick={() => setShowChatOnMobile(false)}
+                  className="lg:hidden p-2 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  ←
+                </button>
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white">
                   {getOtherParticipant(selectedRoom).name.charAt(0)}
                 </div>
