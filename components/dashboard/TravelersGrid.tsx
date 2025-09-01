@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { MapPin, UserPlus, UserMinus, MessageCircle, Star } from 'lucide-react';
-import { getAllUsers, followUser, unfollowUser, isFollowing, getUserStats, getUserPosts } from '@/lib/supabase';
+import { getAllUsers, followUser, unfollowUser, isFollowing, getUserStats, getUserPosts, isRecentlyOnline } from '@/lib/supabase';
 import { useAuth } from '@/components/AuthProvider';
 // Removed Firebase import
 
@@ -126,9 +126,12 @@ export default function TravelersGrid({ onSwitchToChat }: TravelersGridProps) {
 
   const loadTravelers = async () => {
     try {
-      const { getUsersWithOnlineStatus } = await import('@/lib/supabase');
-      const data = await getUsersWithOnlineStatus();
-      const filteredData = data.filter((u: User) => u.id !== user?.id);
+      const data = await getAllUsers();
+      const dataWithOnlineStatus = data.map(user => ({
+        ...user,
+        is_online: user.is_online && user.last_seen ? isRecentlyOnline(user.last_seen) : false
+      }));
+      const filteredData = dataWithOnlineStatus.filter((u: User) => u.id !== user?.id);
       setTravelers(filteredData);
     } catch (error) {
       console.error('Error loading travelers:', error);
