@@ -22,7 +22,9 @@ jobs:
       run: npm ci
       
     - name: Build
-      run: npm run build
+      run: |
+        npm run build
+        ls -la
       env:
         NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
@@ -31,7 +33,12 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        cp -r out/* .
+        if [ -d "out" ]; then
+          cp -r out/* .
+        else
+          echo "No out directory found, using .next/static"
+          cp -r .next/static/* . || echo "No static files found"
+        fi
         git add .
         git commit -m "Deploy to GitHub Pages" || exit 0
         git push
