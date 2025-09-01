@@ -461,7 +461,7 @@ export async function getChatMessages(roomId: string) {
       *,
       sender:users!chat_messages_sender_id_fkey(*)
     `)
-    .eq('room_id', roomId)
+    .eq('chat_room_id', roomId)
     .order('created_at', { ascending: true });
 
   if (error) throw error;
@@ -472,7 +472,7 @@ export async function sendChatMessage(roomId: string, senderId: string, content:
   const { data, error } = await supabase
     .from('chat_messages')
     .insert([{
-      room_id: roomId,
+      chat_room_id: roomId,
       sender_id: senderId,
       content: content
     }])
@@ -515,7 +515,7 @@ export async function createPost(userId: string, content: string, locationTag?: 
   }
 
   const { data, error } = await supabase
-    .from('posts')
+    .from('community_posts')
     .insert([{
       user_id: userId,
       content: content,
@@ -531,10 +531,10 @@ export async function createPost(userId: string, content: string, locationTag?: 
 
 export async function getPosts() {
   const { data, error } = await supabase
-    .from('posts')
+    .from('community_posts')
     .select(`
       *,
-      user:users!posts_user_id_fkey(*)
+      user:users!community_posts_user_id_fkey(*)
     `)
     .order('created_at', { ascending: false });
 
@@ -544,7 +544,7 @@ export async function getPosts() {
 
 export async function getUserPosts(userId: string) {
   const { data, error } = await supabase
-    .from('posts')
+    .from('community_posts')
     .select('*')
     .eq('user_id', userId)
     .order('created_at', { ascending: false });
@@ -558,6 +558,14 @@ export async function getUserStats(userId: string) {
     supabase.from('user_follows').select('id').eq('following_id', userId),
     supabase.from('user_follows').select('id').eq('follower_id', userId)
   ]);
+
+  console.log('getUserStats debug:', {
+    userId,
+    followersResult: followersResult.data,
+    followingResult: followingResult.data,
+    followersError: followersResult.error,
+    followingError: followingResult.error
+  });
 
   return {
     followers: followersResult.data?.length || 0,
@@ -603,7 +611,6 @@ export async function getLocationRating(locationName: string) {
   };
 }
 
-
 // Additional required functions
 export async function updateOnlineStatus(userId: string, isOnline: boolean) {
   const { error } = await supabase
@@ -628,6 +635,36 @@ export async function getUserById(userId: string) {
   return data;
 }
 
+// Real-time online status
+export async function setUserOnline(userId: string) {
+  const { error } = await supabase
+    .from('users')
+    .update({ 
+      is_online: true, 
+      last_seen: new Date().toISOString() 
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+export async function setUserOffline(userId: string) {
+  const { error } = await supabase
+    .from('users')
+    .update({ 
+      is_online: false, 
+      last_seen: new Date().toISOString() 
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
+// Check if user was recently online (within 5 minutes)
+export function isRecentlyOnline(lastSeen: string): boolean {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  return new Date(lastSeen) > fiveMinutesAgo;
+}
 
 export async function isMutualLike(user1Id: string, user2Id: string) {
   const [like1, like2] = await Promise.all([
